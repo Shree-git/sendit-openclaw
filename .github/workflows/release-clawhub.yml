@@ -1,0 +1,26 @@
+name: Release ClawHub Skill Pack
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install ClawHub CLI
+        run: npm install -g clawhub
+      - name: Publish Skill Pack
+        run: |
+          clawhub publish ./skills/sendit-openclaw \
+            --slug sendit-openclaw \
+            --name "SendIt OpenClaw" \
+            --version $(node -p "require('./package.json').version") \
+            --changelog "Automated release"
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}

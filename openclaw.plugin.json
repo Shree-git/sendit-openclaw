@@ -1,0 +1,147 @@
+{
+  "id": "sendit",
+  "name": "SendIt",
+  "description": "Official SendIt plugin for AI-native social media automation, scheduling, and analytics.",
+  "minimumOpenClawVersion": "2026.2.13",
+  "providers": ["sendit"],
+  "skills": ["./skills"],
+  "uiHints": {
+    "enabled": {
+      "label": "Enable SendIt"
+    },
+    "baseUrl": {
+      "label": "SendIt Base URL",
+      "help": "Defaults to https://sendit.infiniteappsai.com"
+    },
+    "auth.mode": {
+      "label": "Auth Mode",
+      "help": "auto, api_key, or oauth"
+    },
+    "auth.apiKey": {
+      "label": "SendIt API Key",
+      "sensitive": true
+    },
+    "auth.oauth.accessToken": {
+      "label": "OAuth Access Token",
+      "sensitive": true,
+      "advanced": true
+    },
+    "auth.oauth.refreshToken": {
+      "label": "OAuth Refresh Token",
+      "sensitive": true,
+      "advanced": true
+    },
+    "auth.oauth.clientId": {
+      "label": "OAuth Client ID",
+      "sensitive": true,
+      "advanced": true
+    },
+    "auth.oauth.clientSecret": {
+      "label": "OAuth Client Secret",
+      "sensitive": true,
+      "advanced": true
+    },
+    "teamId": {
+      "label": "Team ID",
+      "help": "Optional team context for team-scoped publishing"
+    },
+    "timeouts.requestMs": {
+      "label": "REST Timeout (ms)",
+      "advanced": true
+    },
+    "timeouts.mcpMs": {
+      "label": "MCP Timeout (ms)",
+      "advanced": true
+    },
+    "retries.max": {
+      "label": "Retry Attempts",
+      "advanced": true
+    },
+    "retries.backoffMs": {
+      "label": "Retry Backoff (ms)",
+      "advanced": true
+    },
+    "mcp.enabled": {
+      "label": "Enable MCP Bridge",
+      "advanced": true
+    },
+    "mcp.endpoint": {
+      "label": "MCP Endpoint",
+      "advanced": true
+    },
+    "telemetry.enabled": {
+      "label": "Send Header Telemetry",
+      "advanced": true
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "enabled": {
+        "type": "boolean"
+      },
+      "baseUrl": {
+        "type": "string"
+      },
+      "auth": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": ["auto", "api_key", "oauth"]
+          },
+          "apiKey": {
+            "type": "string"
+          },
+          "oauth": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "accessToken": { "type": "string" },
+              "refreshToken": { "type": "string" },
+              "expiresAt": { "type": "number" },
+              "clientId": { "type": "string" },
+              "clientSecret": { "type": "string" }
+            }
+          }
+        }
+      },
+      "teamId": {
+        "type": "string"
+      },
+      "timeouts": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "requestMs": { "type": "number", "minimum": 1000 },
+          "mcpMs": { "type": "number", "minimum": 1000 }
+        }
+      },
+      "retries": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "max": { "type": "integer", "minimum": 0, "maximum": 5 },
+          "backoffMs": { "type": "number", "minimum": 100 }
+        }
+      },
+      "mcp": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean" },
+          "endpoint": { "type": "string" }
+        }
+      },
+      "telemetry": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": { "type": "boolean" }
+        }
+      }
+    }
+  }
+}

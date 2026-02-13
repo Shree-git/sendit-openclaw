@@ -1,0 +1,58 @@
+name: Mirror To SendIt Monorepo
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SENDIT_MONOREPO_REPO: Shree-git/sendit
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Canonical Repo
+        uses: actions/checkout@v4
+        with:
+          path: canonical
+
+      - name: Checkout SendIt Monorepo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.SENDIT_MONOREPO_REPO }}
+          token: ${{ secrets.SENDIT_MONOREPO_TOKEN }}
+          path: monorepo
+
+      - name: Sync Plugin + Skill Pack Snapshot
+        run: |
+          rsync -a --delete --exclude '.git' --exclude 'node_modules' --exclude 'dist' \
+            canonical/ monorepo/integrations/openclaw-plugin/
+
+          mkdir -p monorepo/integrations/clawhub-skill-pack/sendit-openclaw
+          rsync -a --delete canonical/skills/sendit-openclaw/ \
+            monorepo/integrations/clawhub-skill-pack/sendit-openclaw/
+
+      - name: Open Mirror PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          path: monorepo
+          token: ${{ secrets.SENDIT_MONOREPO_TOKEN }}
+          commit-message: "chore(openclaw): mirror canonical sendit-openclaw snapshot"
+          branch: codex/openclaw-mirror-${{ github.run_id }}
+          delete-branch: true
+          title: "chore(openclaw): mirror canonical sendit-openclaw snapshot"
+          body: |
+            Automated mirror from canonical `sendit-openclaw`.
+
+            Source workflow: `${{ github.workflow }}` run `${{ github.run_id }}`.
+            Mirror targets:
+            - `integrations/openclaw-plugin/`
+            - `integrations/clawhub-skill-pack/sendit-openclaw/`
+          add-paths: |
+            integrations/openclaw-plugin
+            integrations/clawhub-skill-pack/sendit-openclaw
