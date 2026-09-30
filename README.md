@@ -24,7 +24,12 @@ The package declares the same Node requirements as that host.
 
 The ClawHub package passed its scan and was installed with all 41 tools in OpenClaw 2026.9.6.
 The [GitHub release archive](https://github.com/Shree-git/sendit-openclaw/releases/tag/v0.2.0) is also public.
-The npm release remains pending publisher authentication.
+The [npm package](https://www.npmjs.com/package/@senditapp/openclaw) is public and was installed with all 41 tools and no diagnostics in OpenClaw 2026.9.6.
+To install the same version from npm:
+
+```bash
+openclaw plugins install @senditapp/openclaw@0.2.0 --pin
+```
 
 ## Quick start
 
