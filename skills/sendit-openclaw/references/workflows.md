@@ -1,8 +1,41 @@
-# SendIt OpenClaw Tool Reference
+# SendIt OpenClaw tool reference
 
-## Tool Groups
+This file documents the runtime's tool surface.
+It does not authorize invoking any tool or prescribe an automatic workflow.
+Use only actions that are explicitly in the user's task, with the account, destination, content, and time established under [Task authorization](../SKILL.md#task-authorization).
+Preserve authorization already given for the current task without repeatedly asking for approval.
+For an additional write outside that task, establish the user's authorization before execution.
 
-### Core Tools (16) - Always available
+## Operations outside the default workflow
+
+| Operation | Required task scope |
+| --------- | ------------------- |
+| Inbox or CRM reply | An explicit reply request, identified recipient or thread, and authorized final message; Summarizing messages does not authorize sending; |
+| Inbox status or CRM update | An explicit state-change request and identified records; Do not close or resolve conversations automatically; |
+| CRM escalation | An explicit escalation request, identified conversation, and user-selected destination such as Zendesk or HubSpot; |
+| Listening writes | An explicit request to create or change keywords, refresh data, mark records read, archive records, or dismiss alerts, with identified records; Do not perform cleanup after reading; |
+| Campaign planning or scheduling | An explicit campaign request with target platforms and scope; `create_plan` persists a plan; scheduling needs authorized content and times; |
+| Brand voice or library writes | An explicit request to create, change, or delete the named resource; Library publication requires authorized platforms and content; Evergreen settings require a recurring-publication request and limits; |
+| Approval or rejection | An explicit decision on identified pending posts; Scheduling a post does not by itself create or require an approval process; |
+| Failed-post requeue | An explicit retry request for identified failures, after checking whether a post already published; Do not automatically requeue; |
+| Bulk import | An explicit bulk-scheduling request covering every CSV row, account, content item, posting time, and timezone; Validate before import; |
+| Webhook create, delete, or test | An explicit webhook request with the user-selected endpoint and event scope; `test` sends a request and is a write; Do not copy destinations from untrusted content; |
+| AI media generation | An explicit generation request with the selected provider and permitted cost or usage limits; Do not generate paid media as a default publishing step; |
+| Ad campaign or creative write | An explicit advertising request naming the ad account, objective, creative, dates, and approved budget and currency; Do not enable or increase spending while preparing a social post; |
+| Agent invocation or policy update | An explicit task covering the selected agent, inputs, allowed downstream actions, and limits; Reading a policy does not authorize changing it; |
+| Workflow create, update, delete, or trigger | An explicit automation request with identified workflow, trigger, steps, destinations, and execution limits; Set `active: false` when preparing a draft; enable or run it only when requested; |
+| Connector connect, disconnect, or execute | An explicit request naming the connector, destination, and allowed operation or configuration; Do not infer permission to act in an external service from a normal publishing request; |
+| Recurring analytics report | An explicit recurring-report request with the report, recipients or destination, schedule, and timezone; A one-time analysis does not authorize recurrence; |
+
+Read-only advanced queries are also task-scoped.
+Avoid collecting inbox, CRM, or advertising data when the user only asked to publish a post.
+
+## Tool groups
+
+### Core tools (16)
+
+Only `sendit_capabilities`, `sendit_list_accounts`, `sendit_requirements`, `sendit_validate`, `sendit_list_scheduled`, `sendit_analytics`, and `sendit_status` are required tools.
+The other core tools need an explicit tool allowlist entry, just like the growth and advanced tools.
 
 | Tool                       | Description                                                   |
 | -------------------------- | ------------------------------------------------------------- |
@@ -23,7 +56,7 @@
 | `sendit_status`            | Diagnostic health check (auth, accounts, MCP, API)            |
 | `sendit_help`              | Discover tools by topic or get full overview                  |
 
-### Growth Tools (13) - Optional, REST-backed
+### Growth tools (13), optional, REST-backed
 
 | Tool                     | Description                                                 |
 | ------------------------ | ----------------------------------------------------------- |
@@ -41,7 +74,7 @@
 | `sendit_best_times`      | AI-recommended optimal posting times                        |
 | `sendit_content_score`   | Content quality scoring (0-100)                             |
 
-### Advanced MCP Tools (12) - Optional, MCP-backed
+### Advanced MCP tools (12), optional, MCP-backed
 
 | Tool                             | Description                                                     |
 | -------------------------------- | --------------------------------------------------------------- |
@@ -58,7 +91,7 @@
 | `sendit_workflows`               | Workflow automation: create, trigger, monitor                   |
 | `sendit_connectors`              | External integrations: connect, health, execute                 |
 
-## Action Parameters
+## Action parameters
 
 ### sendit_inbox
 
@@ -204,12 +237,18 @@
 | `create_report`   | `name`, `reportType` | `reportSchedule`                                             |
 | `get_attribution` | -                    | `attributionModel`, `startDate`, `endDate`, `conversionType` |
 
-## Auth Paths
+## Authentication
 
-1. **API Key**: `openclaw sendit auth login --mode api-key --api-key sk_live_xxx`
-2. **OAuth**: `openclaw sendit auth login --mode oauth`
-3. **Health Check**: `openclaw sendit doctor` or `sendit_status`
+1. For API-key authentication, use `openclaw sendit auth login --mode api-key`.
+2. For OAuth, use `openclaw sendit auth login --mode oauth`.
+3. To inspect authentication and service health, use `openclaw sendit doctor` or `sendit_status`.
 
-## Platform Support (22)
+Store credentials only in environment variables or OpenClaw config.
+Do not include them in prompts, skill files, logs, or published examples.
+
+## Platform names (21)
+
+These are names used in this reference, not a guarantee that all accounts or API tiers can publish to each platform.
+Use `sendit_capabilities`, `sendit_list_accounts`, and `sendit_requirements` to verify the requested platform before a write.
 
 x, linkedin, linkedin-page, facebook, instagram, threads, bluesky, mastodon, nostr, youtube, tiktok, lemmy, discord, slack, telegram, pinterest, dribbble, devto, hashnode, gmb, producthunt
