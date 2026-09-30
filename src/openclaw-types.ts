@@ -1,4 +1,4 @@
-import type { Command } from "commander";
+import type { Command } from 'commander';
 
 export interface OpenClawPluginEntry {
   enabled?: boolean;
@@ -57,7 +57,7 @@ export interface ProviderAuthMethod {
   id: string;
   label: string;
   hint?: string;
-  kind: "oauth" | "api_key" | "token" | "device_code" | "custom";
+  kind: 'oauth' | 'api_key' | 'token' | 'device_code' | 'custom';
   run: (ctx: ProviderAuthContext) => Promise<{
     profiles: Array<{
       profileId: string;
@@ -75,9 +75,8 @@ export interface OpenClawProviderPlugin {
   docsPath?: string;
   aliases?: string[];
   auth: ProviderAuthMethod[];
-  refreshOAuth?: (
-    credential: SendItOAuthCredential
-  ) => Promise<SendItOAuthCredential>;
+  refreshOAuth?: (credential: SendItOAuthCredential) => Promise<SendItOAuthCredential>;
+  buildMissingAuthMessage?: () => string;
 }
 
 export interface OpenClawPluginApi {
@@ -97,5 +96,5 @@ export interface OpenClawPluginDefinition {
   name?: string;
   description?: string;
   configSchema?: unknown;
-  register?: (api: OpenClawPluginApi) => void | Promise<void>;
+  register?: (api: OpenClawPluginApi) => void;
 }

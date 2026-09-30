@@ -1,8 +1,8 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { SendItToolRuntime } from "../src/tools.js";
-import { SENDIT_TOOL_NAMES } from "../src/constants.js";
-import type { SendItHttpClient } from "../src/http-client.js";
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { SendItToolRuntime } from '../src/tools/index.js';
+import { SENDIT_TOOL_NAMES } from '../src/constants.js';
+import type { SendItHttpClient } from '../src/http-client.js';
 
 const logger = {
   info: () => {},
@@ -25,19 +25,21 @@ const noOpHttpClient = {
   },
 };
 
-test("registers all prefixed tools with write-side optional flags", () => {
+test('registers all 41 prefixed tools with correct optional flags', () => {
   const runtime = new SendItToolRuntime({
     httpClient: noOpHttpClient as unknown as SendItHttpClient,
     mcpClient: null,
     mcpEnabled: false,
+    authMode: 'auto',
     logger,
   });
 
   const registrations: Array<{ name: string; optional: boolean }> = [];
   const api = {
-    registerTool: (tool: { name: string }, opts?: { optional?: boolean }) => {
+    registerTool: (tool: unknown, opts?: { optional?: boolean }) => {
+      const t = tool as { name: string };
       registrations.push({
-        name: tool.name,
+        name: t.name,
         optional: Boolean(opts?.optional),
       });
     },
@@ -48,29 +50,63 @@ test("registers all prefixed tools with write-side optional flags", () => {
   const expectedToolNames = Object.values(SENDIT_TOOL_NAMES);
   const actualToolNames = registrations.map((entry) => entry.name);
 
-  assert.equal(actualToolNames.length, expectedToolNames.length);
+  assert.equal(
+    actualToolNames.length,
+    expectedToolNames.length,
+    `Expected ${expectedToolNames.length} tools, got ${actualToolNames.length}. ` +
+      `Missing: ${expectedToolNames.filter((n) => !actualToolNames.includes(n)).join(', ')}. ` +
+      `Extra: ${actualToolNames.filter((n) => !expectedToolNames.includes(n as never)).join(', ')}`
+  );
   assert.deepEqual([...new Set(actualToolNames)].sort(), [...expectedToolNames].sort());
 
-  const optionalTools = new Set(
-    registrations.filter((entry) => entry.optional).map((entry) => entry.name)
-  );
-
-  const expectedOptionalTools = new Set([
-    SENDIT_TOOL_NAMES.connectAccount,
-    SENDIT_TOOL_NAMES.uploadMedia,
-    SENDIT_TOOL_NAMES.publish,
-    SENDIT_TOOL_NAMES.schedule,
-    SENDIT_TOOL_NAMES.triggerScheduled,
-    SENDIT_TOOL_NAMES.deleteScheduled,
-    SENDIT_TOOL_NAMES.inbox,
-    SENDIT_TOOL_NAMES.listening,
-    SENDIT_TOOL_NAMES.campaigns,
-    SENDIT_TOOL_NAMES.brandVoice,
-    SENDIT_TOOL_NAMES.aiDraftReply,
-    SENDIT_TOOL_NAMES.aiSummarizeMentions,
-    SENDIT_TOOL_NAMES.aiGeneratePostBundle,
-    SENDIT_TOOL_NAMES.aiCritiquePost,
+  // Required tools (8): capabilities, listAccounts, requirements, validate, listScheduled, analytics, status
+  const expectedRequiredTools = new Set([
+    SENDIT_TOOL_NAMES.capabilities,
+    SENDIT_TOOL_NAMES.listAccounts,
+    SENDIT_TOOL_NAMES.requirements,
+    SENDIT_TOOL_NAMES.validate,
+    SENDIT_TOOL_NAMES.listScheduled,
+    SENDIT_TOOL_NAMES.analytics,
+    SENDIT_TOOL_NAMES.status,
   ]);
 
-  assert.deepEqual([...optionalTools].sort(), [...expectedOptionalTools].sort());
+  for (const tool of registrations) {
+    if (expectedRequiredTools.has(tool.name as never)) {
+      assert.equal(tool.optional, false, `${tool.name} should be required`);
+    } else {
+      assert.equal(tool.optional, true, `${tool.name} should be optional`);
+    }
+  }
+});
+
+test('no duplicate tool names', () => {
+  const runtime = new SendItToolRuntime({
+    httpClient: noOpHttpClient as unknown as SendItHttpClient,
+    mcpClient: null,
+    mcpEnabled: false,
+    authMode: 'auto',
+    logger,
+  });
+
+  const names: string[] = [];
+  const api = {
+    registerTool: (tool: unknown) => {
+      const t = tool as { name: string };
+      names.push(t.name);
+    },
+  };
+
+  runtime.registerTools(api as never);
+
+  const unique = new Set(names);
+  assert.equal(
+    unique.size,
+    names.length,
+    `Duplicate tool names found: ${names.filter((n, i) => names.indexOf(n) !== i)}`
+  );
+});
+
+test('tool count matches SENDIT_TOOL_NAMES', () => {
+  const expectedCount = Object.keys(SENDIT_TOOL_NAMES).length;
+  assert.equal(expectedCount, 41, `Expected 41 tool name entries, got ${expectedCount}`);
 });

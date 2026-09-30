@@ -1,26 +1,70 @@
-name: Release ClawHub Skill Pack
+name: OpenClaw release (ClawHub)
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate without publishing
+        type: boolean
+        default: true
+      publish_plugin:
+        description: Publish the native plugin package as well as the skill
+        type: boolean
+        default: true
+      changelog:
+        description: Describe this release
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openclaw-clawhub-release
+  cancel-in-progress: false
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "22"
-      - name: Install ClawHub CLI
-        run: npm install -g clawhub
-      - name: Publish Skill Pack
-        run: |
-          clawhub publish ./skills/sendit-openclaw \
-            --slug sendit-openclaw \
-            --name "SendIt OpenClaw" \
-            --version $(node -p "require('./package.json').version") \
-            --changelog "Automated release"
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+        working-directory: .
+      - run: npm run lint && npm test && npm run test:install
+        working-directory: .
+      - name: Read package version
+        run: node -e 'console.log("RELEASE_VERSION=" + JSON.parse(require("node:fs").readFileSync("package.json", "utf8")).version)' >> "$GITHUB_ENV"
+      - name: Authenticate ClawHub
+        if: ${{ !inputs.dry_run }}
+        run: npx --yes clawhub@0.23.3 login --token "$CLAWHUB_TOKEN" --no-browser
         env:
           CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+      - name: Publish skill
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          RELEASE_NOTES: ${{ inputs.changelog }}
+        run: |
+          args=()
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); fi
+          npx --yes clawhub@0.23.3 skill publish "$GITHUB_WORKSPACE/skills/sendit-openclaw" \
+            --slug sendit-openclaw --name "SendIt OpenClaw" \
+            --version "$RELEASE_VERSION" --changelog "$RELEASE_NOTES" \
+            --source-repo "$GITHUB_REPOSITORY" --source-commit "$GITHUB_SHA" \
+            --source-path skills/sendit-openclaw "${args[@]}"
+      - name: Publish native plugin
+        if: ${{ inputs.publish_plugin }}
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          RELEASE_NOTES: ${{ inputs.changelog }}
+        run: |
+          args=()
+          if [ "$DRY_RUN" = "true" ]; then args+=(--dry-run); else args+=(--wait); fi
+          npx --yes clawhub@0.23.3 package publish "$GITHUB_WORKSPACE" \
+            --family code-plugin --version "$RELEASE_VERSION" \
+            --changelog "$RELEASE_NOTES" --source-repo "$GITHUB_REPOSITORY" \
+            --source-commit "$GITHUB_SHA" --source-path . "${args[@]}"

@@ -1,6 +1,6 @@
-import type { OpenClawConfig } from "./openclaw-types.js";
+import type { OpenClawConfig } from './openclaw-types.js';
 
-export type SendItAuthMode = "auto" | "api_key" | "oauth";
+export type SendItAuthMode = 'auto' | 'api_key' | 'oauth';
 
 export interface SendItOAuthConfig {
   accessToken?: string;
@@ -34,32 +34,33 @@ export interface SendItPluginConfig {
   telemetry: {
     enabled: boolean;
   };
+  locale: string;
 }
 
-const DEFAULT_BASE_URL = "https://sendit.infiniteappsai.com";
+const DEFAULT_BASE_URL = 'https://sendit.infiniteappsai.com';
 const DEFAULT_REQUEST_TIMEOUT_MS = 20_000;
 const DEFAULT_MCP_TIMEOUT_MS = 25_000;
 const DEFAULT_RETRIES = 2;
 const DEFAULT_BACKOFF_MS = 500;
 
 function asRecord(value: unknown): Record<string, unknown> {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {};
   }
   return value as Record<string, unknown>;
 }
 
 function asString(value: unknown): string | undefined {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
 }
 
 function asBoolean(value: unknown, defaultValue: boolean): boolean {
-  if (typeof value === "boolean") return value;
+  if (typeof value === 'boolean') return value;
   return defaultValue;
 }
 
 function asNumber(value: unknown, defaultValue: number): number {
-  if (typeof value === "number" && Number.isFinite(value)) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
     return value;
   }
   return defaultValue;
@@ -67,7 +68,7 @@ function asNumber(value: unknown, defaultValue: number): number {
 
 function normalizeBaseUrl(rawBaseUrl: string | undefined): string {
   const value = rawBaseUrl || DEFAULT_BASE_URL;
-  return value.replace(/\/+$/, "");
+  return value.replace(/\/+$/, '');
 }
 
 export function resolveSendItPluginConfig(
@@ -98,7 +99,7 @@ export function resolveSendItPluginConfig(
 
   const modeRaw = asString(auth.mode);
   const mode: SendItAuthMode =
-    modeRaw === "api_key" || modeRaw === "oauth" || modeRaw === "auto" ? modeRaw : "auto";
+    modeRaw === 'api_key' || modeRaw === 'oauth' || modeRaw === 'auto' ? modeRaw : 'auto';
 
   const apiKey = asString(auth.apiKey) || envApiKey || modelApiKey;
 
@@ -106,7 +107,7 @@ export function resolveSendItPluginConfig(
     accessToken: asString(oauth.accessToken),
     refreshToken: asString(oauth.refreshToken),
     expiresAt:
-      typeof oauth.expiresAt === "number" && Number.isFinite(oauth.expiresAt)
+      typeof oauth.expiresAt === 'number' && Number.isFinite(oauth.expiresAt)
         ? oauth.expiresAt
         : undefined,
     clientId: asString(oauth.clientId),
@@ -139,6 +140,7 @@ export function resolveSendItPluginConfig(
     telemetry: {
       enabled: asBoolean(telemetry.enabled, true),
     },
+    locale: asString(input.locale) || 'en',
   };
 }
 

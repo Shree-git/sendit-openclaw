@@ -1,12 +1,8 @@
-import { resolveApiBaseUrl, type SendItPluginConfig, type SendItOAuthConfig } from "./config.js";
-import {
-  SENDIT_PLUGIN_ID,
-  SENDIT_PLUGIN_VERSION,
-  SENDIT_SKILL_PACK,
-} from "./constants.js";
-import { fail, isRetryableStatus, ok, type SendItEnvelope } from "./result.js";
+import { resolveApiBaseUrl, type SendItPluginConfig, type SendItOAuthConfig } from './config.js';
+import { SENDIT_PLUGIN_ID, SENDIT_PLUGIN_VERSION, SENDIT_SKILL_PACK } from './constants.js';
+import { fail, isRetryableStatus, ok, type SendItEnvelope } from './result.js';
 
-type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
+type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
 export interface SendItRequestOptions {
   query?: Record<string, unknown>;
@@ -17,33 +13,31 @@ export interface SendItRequestOptions {
   timeoutMs?: number;
 }
 
-export type SendItOAuthRefresher = (
-  oauth: SendItOAuthConfig
-) => Promise<SendItOAuthConfig | null>;
+export type SendItOAuthRefresher = (oauth: SendItOAuthConfig) => Promise<SendItOAuthConfig | null>;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function toErrorMessage(payload: unknown, fallback: string): string {
-  if (!payload || typeof payload !== "object") return fallback;
+  if (!payload || typeof payload !== 'object') return fallback;
   const record = payload as Record<string, unknown>;
 
-  if (typeof record.error === "string") return record.error;
-  if (record.error && typeof record.error === "object") {
+  if (typeof record.error === 'string') return record.error;
+  if (record.error && typeof record.error === 'object') {
     const nested = record.error as Record<string, unknown>;
-    if (typeof nested.message === "string") return nested.message;
-    if (typeof nested.error_description === "string") return nested.error_description;
+    if (typeof nested.message === 'string') return nested.message;
+    if (typeof nested.error_description === 'string') return nested.error_description;
   }
 
-  if (typeof record.message === "string") return record.message;
-  if (typeof record.error_description === "string") return record.error_description;
+  if (typeof record.message === 'string') return record.message;
+  if (typeof record.error_description === 'string') return record.error_description;
 
   return fallback;
 }
 
 function encodeQuery(query: Record<string, unknown> | undefined): string {
-  if (!query) return "";
+  if (!query) return '';
 
   const params = new URLSearchParams();
   for (const [key, value] of Object.entries(query)) {
@@ -60,7 +54,7 @@ function encodeQuery(query: Record<string, unknown> | undefined): string {
   }
 
   const serialized = params.toString();
-  return serialized ? `?${serialized}` : "";
+  return serialized ? `?${serialized}` : '';
 }
 
 export class SendItHttpClient {
@@ -83,14 +77,25 @@ export class SendItHttpClient {
     this.oauthRefresher = refresher;
   }
 
+  /**
+   * Returns a shallow clone of this client that overrides the team context
+   * for all requests. Used for per-tool-call team switching.
+   */
+  withTeam(teamId: string): SendItHttpClient {
+    const clonedConfig = { ...this.config, teamId };
+    const client = new SendItHttpClient(clonedConfig, this.logger);
+    client.oauthRefresher = this.oauthRefresher;
+    return client;
+  }
+
   private async resolveBearerToken(): Promise<string | null> {
     const mode = this.config.auth.mode;
 
-    if (mode === "api_key") {
+    if (mode === 'api_key') {
       return this.config.auth.apiKey || null;
     }
 
-    if (mode === "oauth") {
+    if (mode === 'oauth') {
       return this.resolveOAuthAccessToken();
     }
 
@@ -123,9 +128,10 @@ export class SendItHttpClient {
   }
 
   private buildRequestUrl(path: string, query?: Record<string, unknown>): string {
-    const base = path.startsWith("http://") || path.startsWith("https://")
-      ? path
-      : `${this.apiBaseUrl}${path.startsWith("/") ? "" : "/"}${path}`;
+    const base =
+      path.startsWith('http://') || path.startsWith('https://')
+        ? path
+        : `${this.apiBaseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
 
     return `${base}${encodeQuery(query)}`;
   }
@@ -147,32 +153,32 @@ export class SendItHttpClient {
 
       try {
         const headers = new Headers(options.headers || {});
-        headers.set("Accept", "application/json");
+        headers.set('Accept', 'application/json');
 
         const token = await this.resolveBearerToken();
         if (token) {
-          headers.set("Authorization", `Bearer ${token}`);
+          headers.set('Authorization', `Bearer ${token}`);
         }
 
         if (this.config.teamId) {
-          headers.set("X-Team-ID", this.config.teamId);
+          headers.set('X-Team-ID', this.config.teamId);
         }
 
         if (this.config.telemetry.enabled) {
-          headers.set("X-SendIt-Integration", SENDIT_PLUGIN_ID);
-          headers.set("X-SendIt-Integration-Version", SENDIT_PLUGIN_VERSION);
-          headers.set("X-SendIt-Skill-Pack", SENDIT_SKILL_PACK);
+          headers.set('X-SendIt-Integration', SENDIT_PLUGIN_ID);
+          headers.set('X-SendIt-Integration-Version', SENDIT_PLUGIN_VERSION);
+          headers.set('X-SendIt-Skill-Pack', SENDIT_SKILL_PACK);
         }
 
         if (options.idempotencyKey) {
-          headers.set("Idempotency-Key", options.idempotencyKey);
+          headers.set('Idempotency-Key', options.idempotencyKey);
         }
 
         let body: BodyInit | undefined;
         if (options.formData) {
           body = options.formData;
         } else if (options.body !== undefined) {
-          headers.set("Content-Type", "application/json");
+          headers.set('Content-Type', 'application/json');
           body = JSON.stringify(options.body);
         }
 
@@ -183,8 +189,8 @@ export class SendItHttpClient {
           signal: controller.signal,
         });
 
-        const contentType = response.headers.get("content-type") || "";
-        const parsedPayload = contentType.includes("application/json")
+        const contentType = response.headers.get('content-type') || '';
+        const parsedPayload = contentType.includes('application/json')
           ? ((await response.json()) as unknown)
           : ((await response.text()) as unknown);
 
@@ -206,7 +212,7 @@ export class SendItHttpClient {
           status: response.status,
         });
       } catch (error) {
-        const isAbort = error instanceof Error && error.name === "AbortError";
+        const isAbort = error instanceof Error && error.name === 'AbortError';
         const retryable = true;
 
         if (attempt + 1 < maxAttempts) {
@@ -216,8 +222,8 @@ export class SendItHttpClient {
         }
 
         return fail({
-          code: isAbort ? "timeout" : "network_error",
-          message: error instanceof Error ? error.message : "Network request failed",
+          code: isAbort ? 'timeout' : 'network_error',
+          message: error instanceof Error ? error.message : 'Network request failed',
           retryable,
         });
       } finally {
@@ -226,25 +232,37 @@ export class SendItHttpClient {
     }
 
     return fail({
-      code: "request_failed",
-      message: "Request failed after retries",
+      code: 'request_failed',
+      message: 'Request failed after retries',
       retryable: true,
     });
   }
 
-  async get<T = unknown>(path: string, options: SendItRequestOptions = {}): Promise<SendItEnvelope<T>> {
-    return this.request<T>("GET", path, options);
+  async get<T = unknown>(
+    path: string,
+    options: SendItRequestOptions = {}
+  ): Promise<SendItEnvelope<T>> {
+    return this.request<T>('GET', path, options);
   }
 
-  async post<T = unknown>(path: string, options: SendItRequestOptions = {}): Promise<SendItEnvelope<T>> {
-    return this.request<T>("POST", path, options);
+  async post<T = unknown>(
+    path: string,
+    options: SendItRequestOptions = {}
+  ): Promise<SendItEnvelope<T>> {
+    return this.request<T>('POST', path, options);
   }
 
-  async patch<T = unknown>(path: string, options: SendItRequestOptions = {}): Promise<SendItEnvelope<T>> {
-    return this.request<T>("PATCH", path, options);
+  async patch<T = unknown>(
+    path: string,
+    options: SendItRequestOptions = {}
+  ): Promise<SendItEnvelope<T>> {
+    return this.request<T>('PATCH', path, options);
   }
 
-  async delete<T = unknown>(path: string, options: SendItRequestOptions = {}): Promise<SendItEnvelope<T>> {
-    return this.request<T>("DELETE", path, options);
+  async delete<T = unknown>(
+    path: string,
+    options: SendItRequestOptions = {}
+  ): Promise<SendItEnvelope<T>> {
+    return this.request<T>('DELETE', path, options);
   }
 }

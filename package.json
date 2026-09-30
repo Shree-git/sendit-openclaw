@@ -1,40 +1,92 @@
 {
-  "name": "@sendit/openclaw",
-  "version": "0.1.0",
-  "description": "Official SendIt plugin for OpenClaw with REST + MCP hybrid social automation tools.",
+  "name": "@senditapp/openclaw",
+  "version": "0.2.0",
+  "description": "SendIt social publishing, scheduling, and analytics tools for OpenClaw.",
   "license": "MIT",
   "type": "module",
   "engines": {
-    "node": ">=22.12.0"
+    "node": ">=24.16.0 <25 || >=26.1.0"
   },
   "openclaw": {
     "extensions": [
       "./dist/index.js"
-    ]
+    ],
+    "runtimeExtensions": [
+      "./dist/index.js"
+    ],
+    "compat": {
+      "pluginApi": ">=2026.9.6"
+    },
+    "install": {
+      "npmSpec": "@senditapp/openclaw",
+      "minHostVersion": ">=2026.9.6"
+    },
+    "build": {
+      "openclawVersion": "2026.9.6",
+      "pluginSdkVersion": "2026.9.6"
+    }
   },
   "files": [
-    "dist",
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/src",
     "openclaw.plugin.json",
     "README.md",
+    "LICENSE",
     "skills"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "npm run clean && tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --test dist/test/**/*.test.js",
     "pretest": "npm run build",
-    "lint": "npm run typecheck"
+    "lint": "npm run typecheck",
+    "clean": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\"",
+    "prepack": "npm run lint && npm test",
+    "test:install": "node scripts/test-install.mjs"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.41",
     "json5": "^2.2.3"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.2.13"
+    "openclaw": "2026.9.6"
   },
   "devDependencies": {
     "@types/node": "^22.13.4",
-    "openclaw": "^2026.2.12",
+    "openclaw": "2026.9.6",
     "typescript": "^5.7.3"
+  },
+  "homepage": "https://sendit.infiniteappsai.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Shree-git/sendit-openclaw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Shree-git/sendit-openclaw/issues"
+  },
+  "keywords": [
+    "openclaw",
+    "openclaw-plugin",
+    "sendit",
+    "social-media",
+    "mcp",
+    "scheduling"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
   }
 }

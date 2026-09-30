@@ -1,18 +1,14 @@
-import {
-  SENDIT_PLUGIN_ID,
-  SENDIT_PLUGIN_VERSION,
-  SENDIT_SKILL_PACK,
-} from "./constants.js";
-import { fail, ok, type SendItEnvelope } from "./result.js";
+import { SENDIT_PLUGIN_ID, SENDIT_PLUGIN_VERSION, SENDIT_SKILL_PACK } from './constants.js';
+import { fail, ok, type SendItEnvelope } from './result.js';
 
 interface JsonRpcSuccess {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   id: string | number | null;
   result: unknown;
 }
 
 interface JsonRpcError {
-  jsonrpc: "2.0";
+  jsonrpc: '2.0';
   id: string | number | null;
   error: {
     code?: number | string;
@@ -24,7 +20,7 @@ interface JsonRpcError {
 type JsonRpcResponse = JsonRpcSuccess | JsonRpcError;
 
 function isJsonRpcError(payload: JsonRpcResponse): payload is JsonRpcError {
-  return "error" in payload;
+  return 'error' in payload;
 }
 
 function buildRpcId(): string {
@@ -53,7 +49,7 @@ export class SendItMcpClient {
     params?: Record<string, unknown>
   ): Promise<SendItEnvelope<T>> {
     const payload = {
-      jsonrpc: "2.0" as const,
+      jsonrpc: '2.0' as const,
       id: buildRpcId(),
       method,
       params,
@@ -68,33 +64,33 @@ export class SendItMcpClient {
 
       try {
         const headers = new Headers({
-          "Content-Type": "application/json",
-          Accept: "application/json",
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
         });
 
         const token = await this.getBearerToken();
         if (token) {
-          headers.set("Authorization", `Bearer ${token}`);
+          headers.set('Authorization', `Bearer ${token}`);
         }
 
         if (this.sessionId) {
-          headers.set("mcp-session-id", this.sessionId);
+          headers.set('mcp-session-id', this.sessionId);
         }
 
         if (this.includeTelemetryHeaders) {
-          headers.set("X-SendIt-Integration", SENDIT_PLUGIN_ID);
-          headers.set("X-SendIt-Integration-Version", SENDIT_PLUGIN_VERSION);
-          headers.set("X-SendIt-Skill-Pack", SENDIT_SKILL_PACK);
+          headers.set('X-SendIt-Integration', SENDIT_PLUGIN_ID);
+          headers.set('X-SendIt-Integration-Version', SENDIT_PLUGIN_VERSION);
+          headers.set('X-SendIt-Skill-Pack', SENDIT_SKILL_PACK);
         }
 
         const response = await fetch(this.endpoint, {
-          method: "POST",
+          method: 'POST',
           headers,
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
 
-        const nextSessionId = response.headers.get("mcp-session-id");
+        const nextSessionId = response.headers.get('mcp-session-id');
         if (nextSessionId) {
           this.sessionId = nextSessionId;
         }
@@ -109,9 +105,7 @@ export class SendItMcpClient {
           const retryable = response.status === 429 || response.status >= 500;
           if (retryable && attempt + 1 < maxAttempts) {
             attempt += 1;
-            await new Promise((resolve) =>
-              setTimeout(resolve, this.retries.backoffMs * attempt)
-            );
+            await new Promise((resolve) => setTimeout(resolve, this.retries.backoffMs * attempt));
             continue;
           }
 
@@ -125,26 +119,24 @@ export class SendItMcpClient {
 
         if (isJsonRpcError(body)) {
           return fail({
-            code: typeof body.error.code === "number" ? `mcp_${body.error.code}` : "mcp_error",
-            message: body.error.message || "MCP error",
+            code: typeof body.error.code === 'number' ? `mcp_${body.error.code}` : 'mcp_error',
+            message: body.error.message || 'MCP error',
             retryable: false,
           });
         }
 
         return ok(body.result as T);
       } catch (error) {
-        const isAbort = error instanceof Error && error.name === "AbortError";
+        const isAbort = error instanceof Error && error.name === 'AbortError';
         if (attempt + 1 < maxAttempts) {
           attempt += 1;
-          await new Promise((resolve) =>
-            setTimeout(resolve, this.retries.backoffMs * attempt)
-          );
+          await new Promise((resolve) => setTimeout(resolve, this.retries.backoffMs * attempt));
           continue;
         }
 
         return fail({
-          code: isAbort ? "mcp_timeout" : "mcp_network_error",
-          message: error instanceof Error ? error.message : "MCP request failed",
+          code: isAbort ? 'mcp_timeout' : 'mcp_network_error',
+          message: error instanceof Error ? error.message : 'MCP request failed',
           retryable: true,
         });
       } finally {
@@ -153,18 +145,18 @@ export class SendItMcpClient {
     }
 
     return fail({
-      code: "mcp_request_failed",
-      message: "MCP request failed after retries",
+      code: 'mcp_request_failed',
+      message: 'MCP request failed after retries',
       retryable: true,
     });
   }
 
   async initialize(): Promise<SendItEnvelope<Record<string, unknown>>> {
-    const result = await this.rpcRequest<Record<string, unknown>>("initialize", {
-      protocolVersion: "2024-11-05",
+    const result = await this.rpcRequest<Record<string, unknown>>('initialize', {
+      protocolVersion: '2024-11-05',
       capabilities: {},
       clientInfo: {
-        name: "@sendit/openclaw",
+        name: '@senditapp/openclaw',
         version: SENDIT_PLUGIN_VERSION,
       },
     });
@@ -174,15 +166,15 @@ export class SendItMcpClient {
     }
 
     // One-shot notification per MCP lifecycle.
-    await this.rpcRequest("notifications/initialized", {});
+    await this.rpcRequest('notifications/initialized', {});
     return result;
   }
 
   async listTools(): Promise<SendItEnvelope<{ tools: Array<{ name: string }> }>> {
-    return this.rpcRequest<{ tools: Array<{ name: string }> }>("tools/list", {});
+    return this.rpcRequest<{ tools: Array<{ name: string }> }>('tools/list', {});
   }
 
   async callTool(name: string, args: Record<string, unknown>): Promise<SendItEnvelope<unknown>> {
-    return this.rpcRequest<unknown>("tools/call", { name, arguments: args });
+    return this.rpcRequest<unknown>('tools/call', { name, arguments: args });
   }
 }

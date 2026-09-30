@@ -1,13 +1,13 @@
-import { loginSendItOAuth, refreshSendItOAuthToken } from "./oauth.js";
-import { resolveSendItPluginConfig } from "./config.js";
+import { loginSendItOAuth, refreshSendItOAuthToken } from './oauth.js';
+import { resolveSendItPluginConfig } from './config.js';
 import type {
   OpenClawConfig,
   OpenClawPluginApi,
   ProviderAuthContext,
   SendItOAuthCredential,
-} from "./openclaw-types.js";
+} from './openclaw-types.js';
 
-const PROVIDER_ID = "sendit";
+const PROVIDER_ID = 'sendit';
 
 type PluginEntryConfig = {
   enabled?: boolean;
@@ -40,7 +40,7 @@ function mergePluginEntry(
 
 function buildProviderConfigPatch(params: {
   config: OpenClawConfig;
-  mode: "api_key" | "oauth";
+  mode: 'api_key' | 'oauth';
   apiKey?: string;
   oauth?: {
     accessToken: string;
@@ -79,24 +79,40 @@ export function registerSendItProvider(api: OpenClawPluginApi): void {
 
   api.registerProvider({
     id: PROVIDER_ID,
-    label: "SendIt",
-    docsPath: "/providers/models",
-    aliases: ["sendit-social"],
+    label: 'SendIt',
+    docsPath: '/providers/models',
+    aliases: ['sendit-social'],
+    buildMissingAuthMessage: () =>
+      [
+        'SendIt requires authentication before you can use it.',
+        '',
+        'Choose one:',
+        '',
+        '  1. API Key (fastest):',
+        '     openclaw sendit auth login --mode api-key --api-key <your-key>',
+        '     Get your key at: https://sendit.infiniteappsai.com/dashboard → API Keys',
+        '',
+        '  2. OAuth (no key needed):',
+        '     openclaw models auth login --provider sendit',
+        '     This opens your browser to authorize SendIt.',
+        '',
+        'Then verify with: openclaw sendit doctor',
+      ].join('\n'),
     auth: [
       {
-        id: "api-key",
-        label: "API Key",
-        hint: "Use a SendIt API key from dashboard",
-        kind: "api_key",
+        id: 'api-key',
+        label: 'API Key',
+        hint: 'Use a SendIt API key from dashboard',
+        kind: 'api_key',
         run: async (ctx: ProviderAuthContext) => {
           const apiKey = String(
             await ctx.prompter.password({
-              message: "Enter SendIt API key (sk_live_...):",
+              message: 'Enter SendIt API key (sk_live_...):',
             })
           ).trim();
 
           if (!apiKey) {
-            throw new Error("SendIt API key is required");
+            throw new Error('SendIt API key is required');
           }
 
           return {
@@ -104,7 +120,7 @@ export function registerSendItProvider(api: OpenClawPluginApi): void {
               {
                 profileId: `${PROVIDER_ID}:api_key`,
                 credential: {
-                  type: "api_key",
+                  type: 'api_key',
                   provider: PROVIDER_ID,
                   key: apiKey,
                 },
@@ -112,33 +128,33 @@ export function registerSendItProvider(api: OpenClawPluginApi): void {
             ],
             configPatch: buildProviderConfigPatch({
               config: ctx.config,
-              mode: "api_key",
+              mode: 'api_key',
               apiKey,
             }),
             notes: [
-              "API key auth is active for @sendit/openclaw.",
-              "You can switch to OAuth with: openclaw models auth login --provider sendit",
+              'API key auth is active for @senditapp/openclaw.',
+              'You can switch to OAuth with: openclaw models auth login --provider sendit',
             ],
           };
         },
       },
       {
-        id: "oauth",
-        label: "SendIt OAuth",
-        hint: "Dynamic registration + PKCE",
-        kind: "oauth",
+        id: 'oauth',
+        label: 'SendIt OAuth',
+        hint: 'Dynamic registration + PKCE',
+        kind: 'oauth',
         run: async (ctx: ProviderAuthContext) => {
-          const progress = ctx.prompter.progress("Starting SendIt OAuth...");
+          const progress = ctx.prompter.progress('Starting SendIt OAuth...');
           try {
             const result = await loginSendItOAuth(ctx, pluginConfig.baseUrl);
-            progress.stop("SendIt OAuth complete");
+            progress.stop('SendIt OAuth complete');
 
             return {
               profiles: [
                 {
                   profileId: `${PROVIDER_ID}:oauth`,
                   credential: {
-                    type: "oauth",
+                    type: 'oauth',
                     provider: PROVIDER_ID,
                     access: result.accessToken,
                     refresh: result.refreshToken,
@@ -149,7 +165,7 @@ export function registerSendItProvider(api: OpenClawPluginApi): void {
               ],
               configPatch: buildProviderConfigPatch({
                 config: ctx.config,
-                mode: "oauth",
+                mode: 'oauth',
                 oauth: {
                   accessToken: result.accessToken,
                   refreshToken: result.refreshToken,
@@ -159,12 +175,12 @@ export function registerSendItProvider(api: OpenClawPluginApi): void {
                 },
               }),
               notes: [
-                "OAuth credentials were stored in plugin config and auth profiles.",
-                "API key mode remains available as fallback.",
+                'OAuth credentials were stored in plugin config and auth profiles.',
+                'API key mode remains available as fallback.',
               ],
             };
           } catch (error) {
-            progress.stop("SendIt OAuth failed");
+            progress.stop('SendIt OAuth failed');
             throw error;
           }
         },
@@ -183,7 +199,7 @@ export function registerSendItProvider(api: OpenClawPluginApi): void {
       });
 
       if (!refreshed?.accessToken) {
-        throw new Error("Failed to refresh SendIt OAuth token");
+        throw new Error('Failed to refresh SendIt OAuth token');
       }
 
       return {

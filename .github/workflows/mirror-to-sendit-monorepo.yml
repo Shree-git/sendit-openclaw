@@ -1,9 +1,6 @@
 name: Mirror To SendIt Monorepo
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -11,6 +8,7 @@ permissions:
 
 env:
   SENDIT_MONOREPO_REPO: Shree-git/sendit
+
 
 jobs:
   mirror:

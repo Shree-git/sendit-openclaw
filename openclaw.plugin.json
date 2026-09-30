@@ -2,9 +2,36 @@
   "id": "sendit",
   "name": "SendIt",
   "description": "Official SendIt plugin for AI-native social media automation, scheduling, and analytics.",
-  "minimumOpenClawVersion": "2026.2.13",
-  "providers": ["sendit"],
-  "skills": ["./skills"],
+  "providers": [
+    "sendit"
+  ],
+  "skills": [
+    "./skills"
+  ],
+  "providerAuthEnvVars": {
+    "sendit": [
+      "SENDIT_API_KEY",
+      "OPENCLAW_SENDIT_API_KEY"
+    ]
+  },
+  "providerAuthChoices": [
+    {
+      "provider": "sendit",
+      "method": "api-key",
+      "choiceId": "sendit-api-key",
+      "choiceLabel": "SendIt API key",
+      "groupId": "sendit",
+      "groupLabel": "SendIt"
+    },
+    {
+      "provider": "sendit",
+      "method": "oauth",
+      "choiceId": "sendit-oauth",
+      "choiceLabel": "SendIt OAuth",
+      "groupId": "sendit",
+      "groupLabel": "SendIt"
+    }
+  ],
   "uiHints": {
     "enabled": {
       "label": "Enable SendIt"
@@ -90,7 +117,11 @@
         "properties": {
           "mode": {
             "type": "string",
-            "enum": ["auto", "api_key", "oauth"]
+            "enum": [
+              "auto",
+              "api_key",
+              "oauth"
+            ]
           },
           "apiKey": {
             "type": "string"
@@ -99,11 +130,21 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "accessToken": { "type": "string" },
-              "refreshToken": { "type": "string" },
-              "expiresAt": { "type": "number" },
-              "clientId": { "type": "string" },
-              "clientSecret": { "type": "string" }
+              "accessToken": {
+                "type": "string"
+              },
+              "refreshToken": {
+                "type": "string"
+              },
+              "expiresAt": {
+                "type": "number"
+              },
+              "clientId": {
+                "type": "string"
+              },
+              "clientSecret": {
+                "type": "string"
+              }
             }
           }
         }
@@ -115,33 +156,243 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "requestMs": { "type": "number", "minimum": 1000 },
-          "mcpMs": { "type": "number", "minimum": 1000 }
+          "requestMs": {
+            "type": "number",
+            "minimum": 1000
+          },
+          "mcpMs": {
+            "type": "number",
+            "minimum": 1000
+          }
         }
       },
       "retries": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "max": { "type": "integer", "minimum": 0, "maximum": 5 },
-          "backoffMs": { "type": "number", "minimum": 100 }
+          "max": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5
+          },
+          "backoffMs": {
+            "type": "number",
+            "minimum": 100
+          }
         }
       },
       "mcp": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "enabled": { "type": "boolean" },
-          "endpoint": { "type": "string" }
+          "enabled": {
+            "type": "boolean"
+          },
+          "endpoint": {
+            "type": "string"
+          }
         }
       },
       "telemetry": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "enabled": { "type": "boolean" }
+          "enabled": {
+            "type": "boolean"
+          }
         }
+      },
+      "locale": {
+        "type": "string",
+        "enum": [
+          "en",
+          "es"
+        ]
       }
+    }
+  },
+  "version": "0.2.0",
+  "categories": [
+    "sales-marketing"
+  ],
+  "cliCommands": [
+    {
+      "name": "sendit",
+      "description": "Connect and diagnose SendIt social publishing.",
+      "hasSubcommands": true
+    }
+  ],
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "sendit_capabilities",
+      "sendit_list_accounts",
+      "sendit_connect_account",
+      "sendit_requirements",
+      "sendit_validate",
+      "sendit_upload_media",
+      "sendit_publish",
+      "sendit_schedule",
+      "sendit_list_scheduled",
+      "sendit_trigger_scheduled",
+      "sendit_delete_scheduled",
+      "sendit_analytics",
+      "sendit_delete_post",
+      "sendit_preview",
+      "sendit_status",
+      "sendit_help",
+      "sendit_inbox",
+      "sendit_listening",
+      "sendit_campaigns",
+      "sendit_brand_voice",
+      "sendit_content_library",
+      "sendit_approvals",
+      "sendit_dead_letter",
+      "sendit_bulk_schedule",
+      "sendit_webhooks",
+      "sendit_audit_log",
+      "sendit_ai_media",
+      "sendit_best_times",
+      "sendit_content_score",
+      "sendit_ai_draft_reply",
+      "sendit_ai_summarize_mentions",
+      "sendit_ai_generate_post_bundle",
+      "sendit_ai_critique_post",
+      "sendit_unified_analytics",
+      "sendit_anomaly_alerts",
+      "sendit_benchmark",
+      "sendit_ads",
+      "sendit_crm",
+      "sendit_agents",
+      "sendit_workflows",
+      "sendit_connectors"
+    ]
+  },
+  "toolMetadata": {
+    "sendit_capabilities": {
+      "optional": false
+    },
+    "sendit_list_accounts": {
+      "optional": false
+    },
+    "sendit_connect_account": {
+      "optional": true
+    },
+    "sendit_requirements": {
+      "optional": false
+    },
+    "sendit_validate": {
+      "optional": false
+    },
+    "sendit_upload_media": {
+      "optional": true
+    },
+    "sendit_publish": {
+      "optional": true
+    },
+    "sendit_schedule": {
+      "optional": true
+    },
+    "sendit_list_scheduled": {
+      "optional": false
+    },
+    "sendit_trigger_scheduled": {
+      "optional": true
+    },
+    "sendit_delete_scheduled": {
+      "optional": true
+    },
+    "sendit_analytics": {
+      "optional": false
+    },
+    "sendit_delete_post": {
+      "optional": true
+    },
+    "sendit_preview": {
+      "optional": true
+    },
+    "sendit_status": {
+      "optional": false
+    },
+    "sendit_help": {
+      "optional": true
+    },
+    "sendit_inbox": {
+      "optional": true
+    },
+    "sendit_listening": {
+      "optional": true
+    },
+    "sendit_campaigns": {
+      "optional": true
+    },
+    "sendit_brand_voice": {
+      "optional": true
+    },
+    "sendit_content_library": {
+      "optional": true
+    },
+    "sendit_approvals": {
+      "optional": true
+    },
+    "sendit_dead_letter": {
+      "optional": true
+    },
+    "sendit_bulk_schedule": {
+      "optional": true
+    },
+    "sendit_webhooks": {
+      "optional": true
+    },
+    "sendit_audit_log": {
+      "optional": true
+    },
+    "sendit_ai_media": {
+      "optional": true
+    },
+    "sendit_best_times": {
+      "optional": true
+    },
+    "sendit_content_score": {
+      "optional": true
+    },
+    "sendit_ai_draft_reply": {
+      "optional": true
+    },
+    "sendit_ai_summarize_mentions": {
+      "optional": true
+    },
+    "sendit_ai_generate_post_bundle": {
+      "optional": true
+    },
+    "sendit_ai_critique_post": {
+      "optional": true
+    },
+    "sendit_unified_analytics": {
+      "optional": true
+    },
+    "sendit_anomaly_alerts": {
+      "optional": true
+    },
+    "sendit_benchmark": {
+      "optional": true
+    },
+    "sendit_ads": {
+      "optional": true
+    },
+    "sendit_crm": {
+      "optional": true
+    },
+    "sendit_agents": {
+      "optional": true
+    },
+    "sendit_workflows": {
+      "optional": true
+    },
+    "sendit_connectors": {
+      "optional": true
     }
   }
 }
