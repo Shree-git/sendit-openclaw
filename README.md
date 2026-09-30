@@ -13,7 +13,7 @@ Official SendIt plugin for [OpenClaw](https://docs.openclaw.ai/) with a hybrid m
 ## Install
 
 ```bash
-openclaw plugins install @senditapp/openclaw@0.2.0 --pin
+openclaw plugins install clawhub:@senditapp/openclaw@0.2.0
 ```
 
 Tested host: OpenClaw `2026.9.6`.
@@ -21,6 +21,10 @@ Use Node `24.16+` (Node 24) or Node `26.1+`.
 The package declares the same Node requirements as that host.
 
 [OpenClaw plugin APIs are experimental](https://docs.openclaw.ai/plugins/building-plugins), so this package pins its development host and verifies the packed installation on CI.
+
+The ClawHub package passed its scan and was installed with all 41 tools in OpenClaw 2026.9.6.
+The [GitHub release archive](https://github.com/Shree-git/sendit-openclaw/releases/tag/v0.2.0) is also public.
+The npm release remains pending publisher authentication.
 
 ## Quick start
 
